@@ -26,7 +26,7 @@ class TestValidation:
         with pytest.raises(DataSourceValidationException) as ex:
             validator = DataSourceValidator(None, None, "test-namespace")
             await validator.validate(body)
-            assert "AWAITING_APPROVAL" == ex.value.status_code
+        assert "AWAITING_APPROVAL" == ex.value.status_code
 
     @pytest.mark.asyncio
     async def test_valid_approvals_no_connections(self):
@@ -34,7 +34,7 @@ class TestValidation:
         with pytest.raises(DataSourceValidationException) as ex:
             validator = DataSourceValidator(None, None, "test-namespace")
             await validator.validate(body)
-            assert "NO_CONNECTIONS" == ex.value.status_code
+        assert "NO_CONNECTIONS" == ex.value.status_code
 
     @pytest.mark.asyncio
     async def test_missing_approvals(self):
@@ -45,16 +45,16 @@ class TestValidation:
         with pytest.raises(DataSourceValidationException) as ex:
             validator = DataSourceValidator(None, None, "test-namespace")
             await validator.validate(body)
-            assert "MISSING_APPROVALS" == ex.value.status_code
+        assert "MISSING_APPROVALS" == ex.value.status_code
 
     @pytest.mark.asyncio
     async def test_dupe_approvals(self):
         body = self.mock_data_source()
         body.spec.approvals = [
             AnalyticsApproval(type = "information_governance", email = "john@some.org"),
-            AnalyticsApproval(type = "data_engineer", email = "jane@some.org"),
+            AnalyticsApproval(type = "data_engineer", email = "john@some.org"),
         ]
         with pytest.raises(DataSourceValidationException) as ex:
             validator = DataSourceValidator(None, None, "test-namespace")
             await validator.validate(body)
-            assert "DUPLICATE_APPROVER" == ex.value.status_code
+        assert "DUPLICATE_APPROVER" == ex.value.status_code

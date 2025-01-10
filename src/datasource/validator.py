@@ -28,10 +28,10 @@ class DataSourceValidator:
         approval_types = {}
 
         for approval in body.spec.approvals:
-            if approval.type != None and approval.type != "":
+            if approval.type == None or approval.type == "":
                 raise DataSourceValidationException("INVALID_APPROVAL", "Approver has no type")
             
-            if approval.email != None and approval.email != "":
+            if approval.email == None or approval.email == "":
                 raise DataSourceValidationException("INVALID_APPROVAL", "Approver has no email")
             
             # We need at least one of each type of approval by default

@@ -1,0 +1,13 @@
+replicas: 1
+image: lscsde/awms-datasource-operator:latest
+nodeSelector: {}
+tolerations: []
+volumes: []
+volumeMounts: []
+env: []
+resources: {}
+rules:
+  approval:
+    types: INFORMATION_GOVERNANCE,DATA_ENGINEER
+    checks:
+      duplicateEmail: true

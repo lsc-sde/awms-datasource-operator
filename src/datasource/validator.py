@@ -58,6 +58,44 @@ class DataSourceValidator:
         if body.spec.connections == None or len(body.spec.connections) == 0:
             raise DataSourceValidationException("NO_CONNECTIONS", "The definition currently has no connections defined")
         
+        for connection in body.spec.connections:
+            if connection.type.casefold() == "databricks":
+                databricks_connection = connection.databricks_connection
+                if databricks_connection == None:
+                    raise DataSourceValidationException("INVALID_DATABRICKS_CONNECTION", "if the type is set to databricks then databricksConnection must be populated.")
+                
+                if databricks_connection.personal_access_token == None and databricks_connection.oauth2_token == None and databricks_connection.service_principle == None:
+                    raise DataSourceValidationException("MISSING_DATABRICKS_AUTH", "One of the fields personalAccessToken, oauth2Token or servicePrinciple must be populated")
+                
+                auth_type = ""
+
+                if databricks_connection.personal_access_token != None:
+                    if auth_type != "":
+                        raise DataSourceValidationException("MULTIPLE_DATABRICKS_AUTHS", f"both {auth_type} and personal_access_token are defined but these are mutually exclusive")
+                    auth_type = "personal_access_token"
+
+                    raise DataSourceValidationException("DATABRICK_AUTH_NOT_IMPLEMENTED", f"{auth_type} is not implemented")
+
+                    
+                if databricks_connection.oauth2_token != None:
+                    if auth_type != "":
+                        raise DataSourceValidationException("MULTIPLE_DATABRICKS_AUTHS", f"both {auth_type} and oauth2_token are defined but these are mutually exclusive")
+                    auth_type = "oauth2_token"
+
+                    raise DataSourceValidationException("DATABRICK_AUTH_NOT_IMPLEMENTED", f"{auth_type} is not implemented")
+
+                if databricks_connection.service_principle != None:
+                    if auth_type != "":
+                        raise DataSourceValidationException("MULTIPLE_DATABRICKS_AUTHS", f"both {auth_type} and service_principle are defined but these are mutually exclusive")
+                    auth_type = "service_principle"
+                    
+                    if databricks_connection.service_principle.secret_name == None:
+                        raise DataSourceValidationException("MISSING_SERVICE_PRINCIPLE_SECRET_NAME", f"secretName is not populated")
+
+            else:
+                raise DataSourceValidationException("UNRECOGNISED_CONNECTION_TYPE", f"The connection type '{connection.type.casefold()}' is not recognised")
+
+
 
     async def validate(self, body : AnalyticsDataSource):
         await self.validate_approvers(body)

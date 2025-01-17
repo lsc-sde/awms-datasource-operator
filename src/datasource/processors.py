@@ -8,18 +8,21 @@ from lscsde_workspace_mgmt.datasourceclient import AnalyticsDataSourceClient
 from pydantic import TypeAdapter
 from uuid import uuid5, NAMESPACE_URL
 from urllib.parse import urlparse
-from kubernetes_asyncio.client import CoreV1Api, ApiException
+from kubernetes_asyncio.client import CoreV1Api, BatchV1Api, ApiException
 from base64 import b64decode
 from sys import stdout
 from .loggers import setup_logger
 from .validator import DataSourceValidator, DataSourceValidationException
+from .converters.jobconverter import JobConverter
 
 class DataSourceProcessor:
-    def __init__(self, core_api : CoreV1Api, ads_client : AnalyticsDataSourceClient):
+    def __init__(self, core_api : CoreV1Api, batch_api : BatchV1Api, ads_client : AnalyticsDataSourceClient):
         self.core_api = core_api 
+        self.batch_api = batch_api
         self.ads_client = ads_client
         self.namespace = os.getenv("NAMESPACE")
         self.log = setup_logger("DataSourceProcessor")
+        self.converter = JobConverter()
 
     async def update_status(self, body : AnalyticsDataSource, status_code):
         if body.status.status_text != status_code:
@@ -36,6 +39,9 @@ class DataSourceProcessor:
             await validator.validate(datasource_resource)
             status_code = "APPROVED"
             await self.update_status(body = datasource_resource, status_code = status_code)
+            jobs = self.converter(datasource_resource)
+            for job in jobs:
+                self.batch_api.create_namespaced_job(job.metadata.namespace, job)
 
         except DataSourceValidationException as ex:
             self.log.error(f"{datasource_resource.metadata.name} in {datasource_resource.metadata.namespace} has returned {ex.status_code}: {ex.message}")

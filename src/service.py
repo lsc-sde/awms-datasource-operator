@@ -46,9 +46,10 @@ async def datasource_updated(body, **_):
 
     api_client = client.ApiClient(kube_config)
     core_api = client.CoreV1Api(api_client)
+    batch_api = client.BatchV1Api(api_client)
     custom_objects_api = client.CustomObjectsApi()
     log = logging.Logger("EventClient")
     event_client = EventClient(api_client=api_client, log = log)
     ads_client = AnalyticsDataSourceClient(custom_objects_api, log, event_client)
-    processor = DataSourceProcessor(core_api, ads_client)
-    await processor.process(body)    
+    processor = DataSourceProcessor(core_api, batch_api, ads_client)
+    await processor.process(body)
